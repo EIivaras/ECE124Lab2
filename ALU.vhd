@@ -18,9 +18,19 @@ end ALU;
 
 architecture arch2 of ALU is
 
+signal andOperation  : std_logic_vector(3 downto 0);
+signal orOperation   : std_logic_vector(3 downto 0);
+signal xorOperation  : std_logic_vector(3 downto 0);
+
 begin 
+	andOperation <= hex_A and hex_B;
+	orOperation  <= hex_A or  hex_B;
+	xorOperation <= hex_A xor hex_B;
 
-
+	
+	ALU_output <= andOperation when pb_0 = '1' else
+                  orOperation  when pb_1 = '1' else
+	              xorOperation when pb_2 = '1' else;
 
 
 end architecture arch2;
