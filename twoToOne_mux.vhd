@@ -6,8 +6,8 @@ use ieee.numeric_std.all;
 
 
 entity twoToOne_mux is port (
-	hex_in	   :  in  std_logic_vector(7 downto 0);
-	sum        :  in  std_logic_vector(7 downto 0);
+	logic	   :  in  std_logic_vector(7 downto 0);
+	addition   :  in  std_logic_vector(7 downto 0);
 	pb3_select :  in  std_logic;
 	hex_out    :  out std_logic_vector(7 downto 0)
 );
@@ -18,7 +18,7 @@ architecture arch1 of twoToOne_mux is
 begin 
 
 with pb3_select select
-hex_out <= hex_in when '0',
-		   sum    when '1';
+hex_out <= logic     when '0',
+		   addition  when '1';
 
 end architecture arch1;

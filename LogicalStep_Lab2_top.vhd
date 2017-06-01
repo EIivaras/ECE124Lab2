@@ -53,8 +53,8 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 	end component;
 	
 	component twoToOne_mux port (
-		hex_in	   :  in  std_logic_vector(7 downto 0);
-		sum        :  in  std_logic_vector(7 downto 0);
+		logic	   :  in  std_logic_vector(7 downto 0);
+		addition   :  in  std_logic_vector(7 downto 0);
 		pb3_select :  in  std_logic;
 		hex_out    :  out std_logic_vector(7 downto 0)
 	);
@@ -70,6 +70,12 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 	);
 	end component;
 	
+	component adder port (
+		hex_A      :  in  std_logic_vector(3 downto 0);
+		hex_B      :  in  std_logic_vector(3 downto 0);
+		sum        :  out std_logic_vector(7 downto 0)
+	);
+	
 	
 	--Create any signals, or temporary variables to be used
 	--But how about, person who wrote this document, YOU TELL US WHAT THE HELL A SIGNAL IS SO I DON'T HAVE TO SPEND A MILLION HOURS FIGURING OUT HOW THE MOST ESSENTIAL PART OF VHDL WORKS
@@ -79,7 +85,7 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 	--std_logic_vector is a signal which can be used for logic operations such as OR, AND, NOT, XOR
 	--
 	
-	signal pb_bar                    : std_logic_vecotr(3 downto 0);
+	signal pb_bar                    : std_logic_vector(3 downto 0);
 	signal seg7_A		             : std_logic_vector(6 downto 0);
 	signal seg7_B		             : std_logic_vector(6 downto 0);
 	signal hex_A		             : std_logic_vector(3 downto 0);
@@ -90,6 +96,8 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 	signal eightBitSum               : std_logic_vector(7 downto 0);
 	signal twoToOne_mux_out_sevenSeg : std_logic_vector(7 downto 0); 
 	signal twoToOne_mux_out_leds     : std_logic_vector(7 downto 0);
+	signal sevenSeg_firstHalf        : std_logic_vector(3 downto 0);
+	signal sevenSeg_secondHalf       : std_logic_vector(3 downto 0);
 	
 -- Here the circuit begins
 
@@ -99,7 +107,6 @@ begin
 	 hex_A <= sw(3 downto 0); --4 bit signal that is generated from usage of push buttons 0-3
 	 hex_B <= sw(7 downto 4); --4 bit signal that is generated from usage of push buttons 4-7
 	 hex_C <= hex_B & hex_A; --probably doesn't work (if it does, hex_B is most significant bit )
-	 eightBitLogic <= "0000" & fourBitLogic;
 	 
 	 --COMPONENT HOOKUP 
 	 --Here, we start by instantiating versions of our components that we created above (actually putting them on the chip board)
@@ -110,13 +117,20 @@ begin
 	 --Essentially what we are doing when we say "port map(clkin_50, seg7_A, seg7_B, etc)" is we are kind of putting a wire between "clkin_50" that connects it to the port labelled "clk" 
 	 --So clkin_50 -> (is connected to) clk (port on the component "segment7_mux"), seg7_A -> DIN2, seg7_B -> DIN1, seg7_data -> DOUT, seg7_char2 -> DIG2, seg7_char1 -> DIG1 
 
-	 INST1: SevenSegment port map(hex_A, seg7_A); --First seven seg decoder 
-	 INST2: SevenSegment port map(hex_B, seg7_B); --Second seven seg decoder
-	 INST3: segment7_mux port map(clkin_50, seg7_A, seg7_B, seg7_data, seg7_char2, seg7_char1);
-	 INST4: ALU          port map(hex_A, hex_B, pb_bar(0), pb_bar(1), pb_bar(2), fourBitLogic);
-     INST5: twoToOne_mux port map(hex_C, eightBitSum, pb_bar(3), twoToOne_mux_sevenSeg);
-	 INST6: twoToOne_mux port map(hex_C, eightBitLogic, pb_bar(3), twoToOne_mux_out_leds); 
-	 INST7: leds_drivers port map(twoToOne_mux_out_leds, leds(7), leds(6), leds(5), leds(4), leds(3), leds(2), leds(1), leds(0));
+	 INST1: ALU          port map(hex_A, hex_B, pb_bar(0), pb_bar(1), pb_bar(2), fourBitLogic);
+	 INST2: adder        port map(hex_A, hex_B, eightBitSum);
+	 INST3: twoToOne_mux port map(hex_C, eightBitSum, pb_bar(3), twoToOne_mux_sevenSeg);
+	 INST4: twoToOne_mux port map(eightBitLogic, eightBitSum, pb_bar(3), twoToOne_mux_out_leds); 
+	 INST5: SevenSegment port map(sevenSeg_firstHalf, seg7_A); --First seven seg decoder 
+	 INST6: SevenSegment port map(sevenSeg_secondHalf, seg7_B); --Second seven seg decoder
+	 INST7: segment7_mux port map(clkin_50, seg7_A, seg7_B, seg7_data, seg7_char2, seg7_char1);
+	 INST8: leds_drivers port map(twoToOne_mux_out_leds, leds(7), leds(6), leds(5), leds(4), leds(3), leds(2), leds(1), leds(0));
+
+	 
+	 eightBitLogic <= "0000" & fourBitLogic;
+	 
+	 sevenSeg_firstHalf <= twoToOne_mux_sevenSeg(7 downto 4); --un-concatenating the 8 bit sum into two 4 bit signals so they can go through the sevenSegment decoder
+	 sevenSeg_secondHalf <= twoToOne_mux_sevenSeg(3 downto 0); 
  
 end SimpleCircuit;
 

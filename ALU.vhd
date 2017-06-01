@@ -26,11 +26,13 @@ begin
 	andOperation <= hex_A and hex_B;
 	orOperation  <= hex_A or  hex_B;
 	xorOperation <= hex_A xor hex_B;
+    
 
 	
 	ALU_output <= andOperation when pb_0 = '1' else
                   orOperation  when pb_1 = '1' else
-	              xorOperation when pb_2 = '1';
+	              xorOperation when pb_2 = '1' else 
+				  "0000";
 
 
 end architecture arch2;
