@@ -129,8 +129,8 @@ begin
 	 
 	 eightBitLogic <= "0000" & fourBitLogic;
 	 
-	 sevenSeg_firstHalf <= twoToOne_mux_sevenSeg(7 downto 4); --un-concatenating the 8 bit sum into two 4 bit signals so they can go through the sevenSegment decoder
-	 sevenSeg_secondHalf <= twoToOne_mux_sevenSeg(3 downto 0); 
+	 sevenSeg_firstHalf <= twoToOne_mux_sevenSeg(3 downto 0); --un-concatenating the 8 bit sum into two 4 bit signals so they can go through the sevenSegment decoder
+	 sevenSeg_secondHalf <= twoToOne_mux_sevenSeg(7 downto 4); 
  
 end SimpleCircuit;
 
