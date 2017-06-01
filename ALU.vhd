@@ -10,7 +10,7 @@ entity ALU is port (
 	pb_0       :  in  std_logic;
 	pb_1       :  in  std_logic;
 	pb_2       :  in  std_logic;
-	ALU_output :  out std_logic_vector(3 downto 0);
+	ALU_output :  out std_logic_vector(3 downto 0)
 );
 end ALU;
 
@@ -30,7 +30,7 @@ begin
 	
 	ALU_output <= andOperation when pb_0 = '1' else
                   orOperation  when pb_1 = '1' else
-	              xorOperation when pb_2 = '1' else;
+	              xorOperation when pb_2 = '1';
 
 
 end architecture arch2;

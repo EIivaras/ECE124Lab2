@@ -8,9 +8,9 @@ entity LogicalStep_Lab2_top is port (
 	pb					: in	std_logic_vector(3 downto 0);
  	sw   				: in  std_logic_vector(7 downto 0); -- The switch inputs
     leds				: out std_logic_vector(7 downto 0); -- for displaying the switch content
-    seg7_data 		: out std_logic_vector(6 downto 0); -- 7-bit outputs to a 7-segment
-	seg7_char1  	: out	std_logic;				    		-- seg7 digit1 selector
-	seg7_char2  	: out	std_logic				    		-- seg7 digit2 selector
+    seg7_data 		    : out std_logic_vector(6 downto 0); -- 7-bit outputs to a 7-segment
+	seg7_char1  	    : out	std_logic;				    		-- seg7 digit1 selector
+	seg7_char2  	    : out	std_logic				    		-- seg7 digit2 selector
 	
 ); 
 end LogicalStep_Lab2_top;
@@ -30,12 +30,25 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
    end component;
 	
 	component segment7_mux port (
-		clk		: in  std_logic := '0';
-		DIN2		: in  std_logic_Vector(6 downto 0);
-		DIN1		: in  std_logic_Vector(6 downto 0);
-		DOUT		: out std_logic_Vector(6 downto 0);
+		clk		    : in  std_logic := '0';
+		DIN2		: in  std_logic_vector(6 downto 0);
+		DIN1		: in  std_logic_vector(6 downto 0);
+		DOUT		: out std_logic_vector(6 downto 0);
 		DIG2		: out std_logic;
 		DIG1		: out std_logic
+	);
+	end component;
+	
+	component leds_drivers port (
+		leds_in     : in   std_logic_vector(7 downto 0);
+		led7_out    : out  std_logic;
+		led6_out    : out  std_logic;
+		led5_out    : out  std_logic;
+		led4_out    : out  std_logic;
+		led3_out    : out  std_logic;
+		led2_out    : out  std_logic;
+		led1_out    : out  std_logic;
+		led0_out    : out  std_logic
 	);
 	end component;
 	
@@ -43,7 +56,7 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 		hex_in	   :  in  std_logic_vector(7 downto 0);
 		sum        :  in  std_logic_vector(7 downto 0);
 		pb3_select :  in  std_logic;
-		hex_out    :  out std_logic_vector(7 downto 0);
+		hex_out    :  out std_logic_vector(7 downto 0)
 	);
 	end component;
 	
@@ -53,7 +66,7 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 		pb_0       :  in  std_logic;
 		pb_1       :  in  std_logic;
 		pb_2       :  in  std_logic;
-	    ALU_output :  out std_logic_vector(3 downto 0);
+	    ALU_output :  out std_logic_vector(3 downto 0)
 	);
 	end component;
 	
@@ -65,14 +78,18 @@ architecture SimpleCircuit of LogicalStep_Lab2_top is
 	--You can then map that signal (through port mapping- again, we will go through it further down)
 	--std_logic_vector is a signal which can be used for logic operations such as OR, AND, NOT, XOR
 	--
-	signal seg7_A		    : std_logic_vector(6 downto 0);
-	signal seg7_B		    : std_logic_vector(6 downto 0);
-	signal hex_A		    : std_logic_vector(3 downto 0);
-	signal hex_B		    : std_logic_vector(7 downto 4);
-	signal hex_C            : std_logic_vector(7 downto 0);
-	signal fourBitSum       : std_logic_vector(3 downto 0);
-	signal eightBitSum      : std_logic_vector(7 downto 0);
-	signal twoToOne_mux_out : std_logic_vector(7 downto 0); --will split into two parts for the sevenSeg decoders 
+	
+	signal pb_bar                    : std_logic_vecotr(3 downto 0);
+	signal seg7_A		             : std_logic_vector(6 downto 0);
+	signal seg7_B		             : std_logic_vector(6 downto 0);
+	signal hex_A		             : std_logic_vector(3 downto 0);
+	signal hex_B		             : std_logic_vector(7 downto 4);
+	signal hex_C                     : std_logic_vector(7 downto 0);
+	signal fourBitLogic              : std_logic_vector(3 downto 0);
+	signal eightBitLogic             : std_logic_vector(7 downto 0);
+	signal eightBitSum               : std_logic_vector(7 downto 0);
+	signal twoToOne_mux_out_sevenSeg : std_logic_vector(7 downto 0); 
+	signal twoToOne_mux_out_leds     : std_logic_vector(7 downto 0);
 	
 -- Here the circuit begins
 
@@ -81,7 +98,8 @@ begin
 	
 	 hex_A <= sw(3 downto 0); --4 bit signal that is generated from usage of push buttons 0-3
 	 hex_B <= sw(7 downto 4); --4 bit signal that is generated from usage of push buttons 4-7
-	 hex_C <= hex_A & hex_B; --probably doesn't work (if it does, hex_B is most significant bit )
+	 hex_C <= hex_B & hex_A; --probably doesn't work (if it does, hex_B is most significant bit )
+	 eightBitLogic <= "0000" & fourBitLogic;
 	 
 	 --COMPONENT HOOKUP 
 	 --Here, we start by instantiating versions of our components that we created above (actually putting them on the chip board)
@@ -95,8 +113,10 @@ begin
 	 INST1: SevenSegment port map(hex_A, seg7_A); --First seven seg decoder 
 	 INST2: SevenSegment port map(hex_B, seg7_B); --Second seven seg decoder
 	 INST3: segment7_mux port map(clkin_50, seg7_A, seg7_B, seg7_data, seg7_char2, seg7_char1);
-	 INST4: ALU          port map(hex_A, hex_B, pb_bar(0), pb_bar(1), pb_bar(2), fourBitSum);
-	 INST5: twoToOne_mux port map(hex_C, eightBitSum, pb_bar(3), twoToOne_mux_out); 
+	 INST4: ALU          port map(hex_A, hex_B, pb_bar(0), pb_bar(1), pb_bar(2), fourBitLogic);
+     INST5: twoToOne_mux port map(hex_C, eightBitSum, pb_bar(3), twoToOne_mux_sevenSeg);
+	 INST6: twoToOne_mux port map(hex_C, eightBitLogic, pb_bar(3), twoToOne_mux_out_leds); 
+	 INST7: leds_drivers port map(twoToOne_mux_out_leds, leds(7), leds(6), leds(5), leds(4), leds(3), leds(2), leds(1), leds(0));
  
 end SimpleCircuit;
 
